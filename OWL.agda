@@ -1,5 +1,5 @@
 
-module OWL where 
+
 
 open import Data.Empty
 open import Function
@@ -14,17 +14,7 @@ open import Relation.Binary.Core hiding (_⇒_)
 open import Data.Nat hiding (_⊔_) renaming (suc to nsuc ; zero to nzero)
 open import Data.Vec hiding (_∈_)
 
-data Facet : Set where 
-  length : Facet
-  minLength : Facet 
-  fpattern : Facet
-  minInclusive : Facet
-  maxInclusive : Facet
-  minExclusive : Facet
-  maxExclusive : Facet
-  totalDigits : Facet 
-  fractionDigits : Facet
-
+open import Facet
 
 {-------------------------------------------------------------------------
 
@@ -41,52 +31,53 @@ Note: There is no reason for separate ND / NV.  These can be rolled into a singl
 and given a joint interpretation function.
 -}
 
-module _ (URI : Set)
-         (_≅_URI : Rel URI zero) -- Congruence relation over 
-         (_≟_URI : Decidable _≅_URI) -- Decidability of equivalence over individuals
+module OWL (ClassURI : Set)
+         (IndividualURI : Set)
+         (DataTypeURI : Set)
+         (DataPropertyURI : Set)
+         (ObjectPropertyURI : Set)
          (Literal : Set) -- Constants
          (Δᴵ : Set) -- Object Domain
          (Δᴰ : Set) -- Data Domain
-         (_ᶜ : URI → Pred Δᴵ zero) -- Interpretation of classes
-         (_ᴰᵀ : URI → Pred Δᴰ zero) -- Interpretation of datatypes
+         (_ᶜ : ClassURI → Pred Δᴵ zero) -- Interpretation of classes
+         (_ᴰᵀ : DataTypeURI → Pred Δᴰ zero) -- Interpretation of datatypes
          (_ᴸᵀ : Literal → Δᴰ) -- Interpretation of constants
-         (_ᴵ : URI → Δᴵ) -- Interpretation of individuals
-         (_ᴰ : URI → Δᴰ) -- Interpretation of individual data points 
-         (_ᴰᴾ : URI → Pred (Δᴵ × Δᴰ) zero) -- interpretation of data properties
-         (_ᴼᴾ : URI → Pred (Δᴵ × Δᴵ ) zero) -- interpretation of object properties
+         (_ᴵ : IndividualURI → Δᴵ) -- Interpretation of individuals
+         (_ᴰᴾ : DataPropertyURI → Pred (Δᴵ × Δᴰ) zero) -- interpretation of data properties
+         (_ᴼᴾ : ObjectPropertyURI → Pred (Δᴵ × Δᴵ ) zero) -- interpretation of object properties
          (_ᶠᴬ : Facet × Literal → Pred Δᴰ zero)
-         (owlThing : URI)
-         (owlNothing : URI)
+         (owlThing : ClassURI)
+         (owlNothing : ClassURI)
          (owlThingLaw : owlThing ᶜ ≡ U)
          (owlNothingLaw : owlNothing ᶜ ≡ ∅)
-         (owlTopObjectProperty : URI)
-         (owlBottomObjectProperty : URI)
+         (owlTopObjectProperty : ObjectPropertyURI)
+         (owlBottomObjectProperty : ObjectPropertyURI)
          (owlTopObjectPropertyLaw : owlTopObjectProperty ᴼᴾ ≡ U)
          (owlBottomObjectPropertyLaw : owlBottomObjectProperty ᴼᴾ ≡ ∅)
-         (owlTopDataProperty : URI) 
-         (owlBottomDataProperty : URI)
+         (owlTopDataProperty : DataPropertyURI) 
+         (owlBottomDataProperty : DataPropertyURI)
          (owlTopDataPropertyLaw : owlTopDataProperty ᴰᴾ ≡ U)
          (owlBottomDataPropertyLaw : owlBottomDataProperty ᴰᴾ ≡ ∅)
-         (♯OP : Pred (Δᴵ × Δᴵ) zero → ℕ) -- cardinality of objects
-         (♯DP : Pred (Δᴵ × Δᴰ) zero → ℕ) -- cardinality of datatypes
+         (♯OP : Pred (Δᴵ × Δᴵ) zero → ℕ) -- cardinality of object properties
+         (♯DP : Pred (Δᴵ × Δᴰ) zero → ℕ) -- cardinality of datatype properties
   where
 
   
   data DataType : Set where
-    DT : URI → DataType
+    DT : DataTypeURI → DataType
 
   data OwlClass : Set where 
-    OC : URI → OwlClass
+    OC : ClassURI → OwlClass
       
   data ObjectProperty : Set where 
-    OP : URI → ObjectProperty
-    IOP : URI → ObjectProperty 
+    OP : ObjectPropertyURI → ObjectProperty
+    IOP : ObjectPropertyURI → ObjectProperty 
 
   data DataProperty : Set where 
-    DP : URI → DataProperty
+    DP : DataPropertyURI → DataProperty
 
   data Individual : Set where 
-    Ind : URI → Individual
+    Ind : IndividualURI → Individual
 
   {-
   inverseObjectProperty := 'InverseObjectProperty' '(' objectPropertyExpression ')'
@@ -279,8 +270,8 @@ module _ (URI : Set)
     ClassAssertion : OwlClass → Individual → Fact
     ObjectPropertyAssertion : ObjectProperty → Individual → Individual → Fact
     NegativeObjectPropertyAssertion : ObjectProperty → Individual → Individual → Fact
-    DataPropertyAssertion : DataProperty → Individual → Individual → Fact
-    NegativeDataPropertyAssertion : DataProperty → Individual → Individual → Fact
+    DataPropertyAssertion : DataProperty → Individual → Literal → Fact
+    NegativeDataPropertyAssertion : DataProperty → Individual → Literal → Fact
   
 
   data Rule : Set where 
@@ -296,18 +287,17 @@ module _ (URI : Set)
   raise : ∀ {ℓ} {A : Set zero} → Pred A zero → Pred A ℓ
   raise  {ℓ} {_} p x = Lift {zero} {ℓ} (p x)
 
-
   domain : ∀ {A B : Set} → Pred (A × B) zero  → Pred A zero 
   domain {A} {B} p = λ x → Σ[ y ∈ B ] p (x , y)
 
   range : ∀ {A B : Set} → Pred (A × B) zero  → Pred B zero 
   range {A} {B} p = λ y → Σ[ x ∈ A ] p (x , y)
 
-  ∣_∣r : DataRange → Pred Δᴰ zero
-  ∣ DataTypeRange (DT t) ∣r = t ᴰᵀ
-  ∣ DataComplimentOf r ∣r = ∁ ∣ r ∣r 
-  ∣ DataOneOf v ∣r = foldr (λ _ → Pred Δᴰ zero) (λ c p → (λ x → x ≡ c ᴸᵀ) ∪ p) U v 
-  ∣ DataTypeRestriction r x x₁ ∣r = ∣ r ∣r ∩ (x , x₁) ᶠᴬ
+  ∣_∣dr : DataRange → Pred Δᴰ zero
+  ∣ DataTypeRange (DT t) ∣dr = t ᴰᵀ
+  ∣ DataComplimentOf r ∣dr = ∁ ∣ r ∣dr 
+  ∣ DataOneOf v ∣dr = foldr (λ _ → Pred Δᴰ zero) (λ c p → (λ x → x ≡ c ᴸᵀ) ∪ p) U v 
+  ∣ DataTypeRestriction r x x₁ ∣dr = ∣ r ∣dr ∩ (x , x₁) ᶠᴬ
 
   ∣_∣op : ObjectProperty → Pred (Δᴵ × Δᴵ) zero
   ∣_∣op (OP x) = x ᴼᴾ 
@@ -326,7 +316,7 @@ module _ (URI : Set)
   ∣ ObjectAllValuesFrom p c ∣c = λ x → ∀ (y : Δᴵ) → (x , y) ∈ ∣ p ∣op → y ∈ ∣ c ∣c
   ∣ ObjectSomeValuesFrom p c ∣c = λ x → Σ[ y ∈ Δᴵ ] (x , y) ∈ ∣ p ∣op × y ∈ ∣ c ∣c
   ∣ ObjectExistsSelf p ∣c = λ x → (x , x) ∈ ∣ p ∣op 
-  ∣ ObjectHasValue (OP p) (Ind v) ∣c = λ x → (x , v ᴰ) ∈ p ᴰᴾ
+  ∣ ObjectHasValue (OP p) (Ind v) ∣c = λ x → (x , v ᴵ) ∈ p ᴼᴾ
   ∣ ObjectHasValue (IOP p) (Ind v) ∣c = ∅
   ∣ ObjectMinCardinality n p ∣c = λ x → ♯OP( λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op ) ≥ n
   ∣ ObjectMaxCardinality n p ∣c = λ x → ♯OP (λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op) ≤ n
@@ -334,48 +324,50 @@ module _ (URI : Set)
   ∣ ObjectMinClassCardinality n p c ∣c = λ x → ♯OP( λ prop → (prop ∈ ∣ p ∣op) × x ∈ domain ∣ p ∣op × proj₂ prop ∈ ∣ c ∣c ) ≥ n
   ∣ ObjectMaxClassCardinality n p c ∣c = λ x → ♯OP (λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op  × proj₂ prop ∈ ∣ c ∣c ) ≤ n
   ∣ ObjectExactClassCardinality n p c ∣c = λ x → ♯OP (λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op × proj₂ prop ∈ ∣ c ∣c ) ≡ n
-  ∣ DataAllValuesFrom (DP p) x₁ ∣c = λ x → ∀ y → y ∈ p ᴰᴾ → proj₂ y ∈ ∣ x₁ ∣r
-  ∣ DataSomeValuesFrom (DP p) x₁ ∣c = λ x → Σ[ y ∈ (Δᴵ × Δᴰ) ] (y ∈ p ᴰᴾ → proj₂ y ∈ ∣ x₁ ∣r)
+  ∣ DataAllValuesFrom (DP p) x₁ ∣c = λ x → ∀ y → y ∈ p ᴰᴾ → proj₂ y ∈ ∣ x₁ ∣dr
+  ∣ DataSomeValuesFrom (DP p) x₁ ∣c = λ x → Σ[ y ∈ (Δᴵ × Δᴰ) ] (y ∈ p ᴰᴾ → proj₂ y ∈ ∣ x₁ ∣dr)
   ∣ DataHasValue (DP p) c ∣c = λ x → Σ[ y ∈ Δᴰ ] (y ≡ c ᴸᵀ × (x , y) ∈ p ᴰᴾ)
   ∣ DataMinCardinality n (DP p) ∣c  = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ)) ≥ n
   ∣ DataMaxCardinality n (DP p) ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ)) ≤ n
   ∣ DataExactCardinality n (DP p) ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ)) ≡ n
-  ∣ DataMinRangeCardinality n (DP p) r ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ) × proj₂ prop ∈ ∣ r ∣r) ≥ n
-  ∣ DataMaxRangeCardinality n (DP p) r ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ) × proj₂ prop ∈ ∣ r ∣r) ≤ n
-  ∣ DataExactRangeCardinality n (DP p) r ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ) × proj₂ prop ∈ ∣ r ∣r) ≡ n
+  ∣ DataMinRangeCardinality n (DP p) r ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ) × proj₂ prop ∈ ∣ r ∣dr) ≥ n
+  ∣ DataMaxRangeCardinality n (DP p) r ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ) × proj₂ prop ∈ ∣ r ∣dr) ≤ n
+  ∣ DataExactRangeCardinality n (DP p) r ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ) × proj₂ prop ∈ ∣ r ∣dr) ≡ n
 
-  ∣_∣ : Rule → Set
-  ∣ FactRule (SameIndividual (Ind x) (Ind x₁)) ∣ = x ᴵ ≡ x₁ ᴵ 
-  ∣ FactRule (DifferentIndividuals (Ind x) (Ind x₁)) ∣ = x ᴵ ≡ x₁ ᴵ → ⊥
-  ∣ FactRule (ClassAssertion (OC C) (Ind x)) ∣ =  x ᴵ ∈ C ᶜ
-  ∣ FactRule (ObjectPropertyAssertion (OP x) (Ind x₁) (Ind x₂)) ∣ = (x₁ ᴵ , x₂ ᴵ) ∈ x ᴼᴾ
-  ∣ FactRule (ObjectPropertyAssertion (IOP x) (Ind x₁) (Ind x₂)) ∣ = (x₂ ᴵ , x₁ ᴵ) ∈ x ᴼᴾ
-  ∣ FactRule (NegativeObjectPropertyAssertion (OP x) (Ind x₁) (Ind x₂)) ∣ = (x₁ ᴵ , x₂ ᴵ) ∉ x ᴼᴾ
-  ∣ FactRule (NegativeObjectPropertyAssertion (IOP x) (Ind x₁) (Ind x₂)) ∣ = (x₂ ᴵ , x₁ ᴵ) ∉ x ᴼᴾ
-  ∣ FactRule (DataPropertyAssertion (DP x) (Ind x₁) (Ind x₂)) ∣ = (x₁ ᴵ , x₂ ᴰ) ∈ x ᴰᴾ
-  ∣ FactRule (NegativeDataPropertyAssertion (DP x) (Ind x₁) (Ind x₂)) ∣ = (x₁ ᴵ , x₂ ᴰ) ∉ x ᴰᴾ
-  ∣ ClassRule (SubClassOf sub super) ∣ = ∣ sub ∣c ⊆ ∣ super ∣c
-  ∣ ClassRule (EquivalentClasses a b) ∣ = ∣ a ∣c ⊆ ∣ b ∣c × ∣ b ∣c ⊆ ∣ a ∣c
-  ∣ ClassRule (DisjointClasses a b) ∣ = ∣ a ∣c ∩ ∣ b ∣c ⊆ ∅
-  ∣ ClassRule (DisjointUnion (OC c) a b) ∣ = c ᶜ ⊆ ∣ a ∣c ∪ ∣ b ∣c × ∣ a ∣c ∩ ∣ b ∣c ⊆ ∅
-  ∣ ObjectPropertyRule (SubObjectPropertyOf sub super) ∣ = ∣ sub ∣sop ⊆ ∣ super ∣op
-  ∣ ObjectPropertyRule (EquivalentObjectProperties a b) ∣ = ∣ a ∣op ⊆ ∣ b ∣op × ∣ b ∣op ⊆ ∣ a ∣op
-  ∣ ObjectPropertyRule (DisjointObjectProperties a b) ∣ = ∣ a ∣op ∩ ∣ b ∣op ⊆ ∅
-  ∣ ObjectPropertyRule (InverseObjectProperties a b) ∣ = ∀ x y → (x , y) ∈ ∣ a ∣op × (y , x) ∈ ∣ b ∣op
-  ∣ ObjectPropertyRule (ObjectPropertyDomain p c) ∣ = ∀ x y → (x , y) ∈ ∣ p ∣op → x ∈ ∣ c ∣c
-  ∣ ObjectPropertyRule (ObjectPropertyRange p c) ∣ = ∀ x y → (x , y) ∈ ∣ p ∣op → y ∈ ∣ c ∣c
-  ∣ ObjectPropertyRule (FunctionalObjectProperty p) ∣ = ∀ x y y' → (x , y) ∈ ∣ p ∣op × (x , y') ∈ ∣ p ∣op → y ≡ y'
-  ∣ ObjectPropertyRule (InverseFunctionalObjectProperty p) ∣ = ∀ x x' y → (x , y) ∈ ∣ p ∣op × (x' , y) ∈ ∣ p ∣op → x ≡ x'
-  ∣ ObjectPropertyRule (ReflexiveObjectProperty p) ∣ = ∀ x → (x , x) ∈ ∣ p ∣op
-  ∣ ObjectPropertyRule (IrreflexiveObjectProperty p) ∣ = ∀ x → (x , x) ∉ ∣ p ∣op
-  ∣ ObjectPropertyRule (SymetricObjectProperty p) ∣ = ∀ x y → (x , y) ∈ ∣ p ∣op × (y , x) ∈ ∣ p ∣op
-  ∣ ObjectPropertyRule (AsymetricObjectProperty p) ∣ = ∀ x y → (x , y) ∈ ∣ p ∣op → (y , x) ∉ ∣ p ∣op
-  ∣ ObjectPropertyRule (TransitiveObjectProperty p) ∣ = ∀ x y z → (x , y) ∈ ∣ p ∣op × (y , z) ∈ ∣ p ∣op → (x , z) ∈ ∣ p ∣op
-  ∣ DataProperytRule (SubDataPropertyOf (DP a) (DP b)) ∣ = a ᴰᴾ ⊆ b ᴰᴾ
-  ∣ DataProperytRule (EquivalentDataProperties (DP a) (DP b)) ∣ = a ᴰᴾ ⊆ b ᴰᴾ × b ᴰᴾ ⊆ a ᴰᴾ
-  ∣ DataProperytRule (DisjointDataProperties (DP a) (DP b)) ∣ = a ᴰᴾ ∩ b ᴰᴾ ⊆ ∅
-  ∣ DataProperytRule (DataPropertyDomain (DP p) c) ∣ = ∀ x y → (x , y) ∈ p ᴰᴾ → x ∈ ∣ c ∣c
-  ∣ DataProperytRule (DataPropertyRange (DP p) dr) ∣ = ∀ x y → (x , y) ∈ p ᴰᴾ → y ∈ ∣ dr ∣r
-  ∣ DataProperytRule (FunctionalDataProperty (DP p)) ∣ = ∀ x y y' → (x , y) ∈ p ᴰᴾ × (x , y') ∈ p ᴰᴾ → y ≡ y'
+  ∣_∣r : Rule → Set
+  ∣ FactRule (SameIndividual (Ind x) (Ind x₁)) ∣r = x ᴵ ≡ x₁ ᴵ 
+  ∣ FactRule (DifferentIndividuals (Ind x) (Ind x₁)) ∣r = x ᴵ ≡ x₁ ᴵ → ⊥
+  ∣ FactRule (ClassAssertion (OC C) (Ind x)) ∣r =  x ᴵ ∈ C ᶜ
+  ∣ FactRule (ObjectPropertyAssertion (OP x) (Ind x₁) (Ind x₂)) ∣r = (x₁ ᴵ , x₂ ᴵ) ∈ x ᴼᴾ
+  ∣ FactRule (ObjectPropertyAssertion (IOP x) (Ind x₁) (Ind x₂)) ∣r = (x₂ ᴵ , x₁ ᴵ) ∈ x ᴼᴾ
+  ∣ FactRule (NegativeObjectPropertyAssertion (OP x) (Ind x₁) (Ind x₂)) ∣r = (x₁ ᴵ , x₂ ᴵ) ∉ x ᴼᴾ
+  ∣ FactRule (NegativeObjectPropertyAssertion (IOP x) (Ind x₁) (Ind x₂)) ∣r = (x₂ ᴵ , x₁ ᴵ) ∉ x ᴼᴾ
+  ∣ FactRule (DataPropertyAssertion (DP p) (Ind x) l) ∣r = (x ᴵ , l ᴸᵀ) ∈ p ᴰᴾ
+  ∣ FactRule (NegativeDataPropertyAssertion (DP p) (Ind x) l) ∣r = (x ᴵ , l ᴸᵀ) ∉ p ᴰᴾ
+  ∣ ClassRule (SubClassOf sub super) ∣r = ∣ sub ∣c ⊆ ∣ super ∣c
+  ∣ ClassRule (EquivalentClasses a b) ∣r = ∣ a ∣c ⊆ ∣ b ∣c × ∣ b ∣c ⊆ ∣ a ∣c
+  ∣ ClassRule (DisjointClasses a b) ∣r = ∣ a ∣c ∩ ∣ b ∣c ⊆ ∅
+  ∣ ClassRule (DisjointUnion (OC c) a b) ∣r = c ᶜ ⊆ ∣ a ∣c ∪ ∣ b ∣c × ∣ a ∣c ∩ ∣ b ∣c ⊆ ∅
+  ∣ ObjectPropertyRule (SubObjectPropertyOf sub super) ∣r = ∣ sub ∣sop ⊆ ∣ super ∣op
+  ∣ ObjectPropertyRule (EquivalentObjectProperties a b) ∣r = ∣ a ∣op ⊆ ∣ b ∣op × ∣ b ∣op ⊆ ∣ a ∣op
+  ∣ ObjectPropertyRule (DisjointObjectProperties a b) ∣r = ∣ a ∣op ∩ ∣ b ∣op ⊆ ∅
+  ∣ ObjectPropertyRule (InverseObjectProperties a b) ∣r = ∀ x y → (x , y) ∈ ∣ a ∣op × (y , x) ∈ ∣ b ∣op
+  ∣ ObjectPropertyRule (ObjectPropertyDomain p c) ∣r = ∀ x y → (x , y) ∈ ∣ p ∣op → x ∈ ∣ c ∣c
+  ∣ ObjectPropertyRule (ObjectPropertyRange p c) ∣r = ∀ x y → (x , y) ∈ ∣ p ∣op → y ∈ ∣ c ∣c
+  ∣ ObjectPropertyRule (FunctionalObjectProperty p) ∣r = ∀ x y y' → (x , y) ∈ ∣ p ∣op × (x , y') ∈ ∣ p ∣op → y ≡ y'
+  ∣ ObjectPropertyRule (InverseFunctionalObjectProperty p) ∣r = ∀ x x' y → (x , y) ∈ ∣ p ∣op × (x' , y) ∈ ∣ p ∣op → x ≡ x'
+  ∣ ObjectPropertyRule (ReflexiveObjectProperty p) ∣r = ∀ x → (x , x) ∈ ∣ p ∣op
+  ∣ ObjectPropertyRule (IrreflexiveObjectProperty p) ∣r = ∀ x → (x , x) ∉ ∣ p ∣op
+  ∣ ObjectPropertyRule (SymetricObjectProperty p) ∣r = ∀ x y → (x , y) ∈ ∣ p ∣op × (y , x) ∈ ∣ p ∣op
+  ∣ ObjectPropertyRule (AsymetricObjectProperty p) ∣r = ∀ x y → (x , y) ∈ ∣ p ∣op → (y , x) ∉ ∣ p ∣op
+  ∣ ObjectPropertyRule (TransitiveObjectProperty p) ∣r = ∀ x y z → (x , y) ∈ ∣ p ∣op × (y , z) ∈ ∣ p ∣op → (x , z) ∈ ∣ p ∣op
+  ∣ DataProperytRule (SubDataPropertyOf (DP a) (DP b)) ∣r = a ᴰᴾ ⊆ b ᴰᴾ
+  ∣ DataProperytRule (EquivalentDataProperties (DP a) (DP b)) ∣r = a ᴰᴾ ⊆ b ᴰᴾ × b ᴰᴾ ⊆ a ᴰᴾ
+  ∣ DataProperytRule (DisjointDataProperties (DP a) (DP b)) ∣r = a ᴰᴾ ∩ b ᴰᴾ ⊆ ∅
+  ∣ DataProperytRule (DataPropertyDomain (DP p) c) ∣r = ∀ x y → (x , y) ∈ p ᴰᴾ → x ∈ ∣ c ∣c
+  ∣ DataProperytRule (DataPropertyRange (DP p) dr) ∣r = ∀ x y → (x , y) ∈ p ᴰᴾ → y ∈ ∣ dr ∣dr
+  ∣ DataProperytRule (FunctionalDataProperty (DP p)) ∣r = ∀ x y y' → (x , y) ∈ p ᴰᴾ × (x , y') ∈ p ᴰᴾ → y ≡ y'
 
- 
+  ∣_∣ : ∀ {n} → Theory n → Set
+  ∣ [] ∣ = ⊤
+  ∣ x ∷ t ∣ = ∣ x ∣r × ∣ t ∣
