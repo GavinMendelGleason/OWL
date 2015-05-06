@@ -220,11 +220,11 @@ module _ (URI : Set)
     SubObjectPropertyOf : SubObjectProperty → ObjectProperty → ObjectPropertyAxiom
     EquivalentObjectProperties : ObjectProperty → ObjectProperty → ObjectPropertyAxiom
     DisjointObjectProperties : ObjectProperty → ObjectProperty → ObjectPropertyAxiom
-    InverseObjectProperties : ObjectProperty → ObjectPropertyAxiom
-    ObjectPropertyDomain : ObjectProperty → ObjectPropertyAxiom 
-    ObjectPropertyRange : ObjectProperty → ObjectPropertyAxiom
-    FunctionalObjectProperties : ObjectProperty → ObjectProperty → ObjectPropertyAxiom
-    InverseObjectProperty : ObjectProperty → ObjectPropertyAxiom
+    InverseObjectProperties : ObjectProperty → ObjectProperty → ObjectPropertyAxiom
+    ObjectPropertyDomain : ObjectProperty → Description → ObjectPropertyAxiom 
+    ObjectPropertyRange : ObjectProperty → Description → ObjectPropertyAxiom
+    FunctionalObjectProperty : ObjectProperty → ObjectPropertyAxiom
+    InverseFunctionalObjectProperty : ObjectProperty → ObjectPropertyAxiom
     ReflexiveObjectProperty : ObjectProperty → ObjectPropertyAxiom
     IrreflexiveObjectProperty : ObjectProperty → ObjectPropertyAxiom
     SymetricObjectProperty : ObjectProperty → ObjectPropertyAxiom
@@ -249,8 +249,8 @@ module _ (URI : Set)
     SubDataPropertyOf : DataProperty → DataProperty → DataPropertyAxiom
     EquivalentDataProperties : DataProperty → DataProperty → DataPropertyAxiom
     DisjointDataProperties : DataProperty → DataProperty → DataPropertyAxiom
-    DataPropertyDomain : DataProperty → DataPropertyAxiom
-    DataPropertyRange : DataProperty → DataPropertyAxiom
+    DataPropertyDomain : DataProperty → Description → DataPropertyAxiom
+    DataPropertyRange : DataProperty  → DataRange → DataPropertyAxiom
     FunctionalDataProperty : DataProperty → DataPropertyAxiom
     
 
@@ -288,7 +288,7 @@ module _ (URI : Set)
     ClassRule : ClassAxiom → Rule
     ObjectPropertyRule : ObjectPropertyAxiom → Rule
     DataProperytRule : DataPropertyAxiom → Rule
-    DescriptionRule : Description → Rule
+--    DescriptionRule : Description → Rule
   
   Theory : ℕ → Set
   Theory n = Vec Rule n
@@ -345,8 +345,15 @@ module _ (URI : Set)
   ∣ DataMaxRangeCardinality n (DP p) r ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ) × proj₂ prop ∈ ∣ r ∣r) ≤ n
   ∣ DataExactRangeCardinality n (DP p) r ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ) × proj₂ prop ∈ ∣ r ∣r) ≡ n
 
+  ∣_∣op : ObjectProperty → Pred (Δᴵ × Δᴵ) zero
+  ∣_∣op (OP x) = x ᴼᴾ 
+  ∣_∣op (IOP x) = ∁ (x ᴼᴾ)
 
-  ∣_∣ : Rule → Set 
+  ∣_∣sop : SubObjectProperty → Pred (Δᴵ × Δᴵ) zero
+  ∣_∣sop (SubObjectPropertyLift p) = ∣ p ∣op 
+  ∣_∣sop (SubObjectPropertyChain p q) = ∣ p ∣op ⇒ ∣ q ∣op
+
+  ∣_∣ : Rule → Set
   ∣ FactRule (SameIndividual (Ind x) (Ind x₁)) ∣ = x ᴵ ≡ x₁ ᴵ 
   ∣ FactRule (DifferentIndividuals (Ind x) (Ind x₁)) ∣ = x ᴵ ≡ x₁ ᴵ → ⊥
   ∣ FactRule (ClassAssertion (OC C) (Ind x)) ∣ =  x ᴵ ∈ C ᶜ
@@ -356,11 +363,28 @@ module _ (URI : Set)
   ∣ FactRule (NegativeObjectPropertyAssertion (IOP x) (Ind x₁) (Ind x₂)) ∣ = (x₂ ᴵ , x₁ ᴵ) ∉ x ᴼᴾ
   ∣ FactRule (DataPropertyAssertion (DP x) (Ind x₁) (Ind x₂)) ∣ = (x₁ ᴵ , x₂ ᴰ) ∈ x ᴰᴾ
   ∣ FactRule (NegativeDataPropertyAssertion (DP x) (Ind x₁) (Ind x₂)) ∣ = (x₁ ᴵ , x₂ ᴰ) ∉ x ᴰᴾ
-  ∣ ClassRule (SubClassOf x x₁) ∣ = {! Pred ∣ x !}
-  ∣ ClassRule (EquivalentClasses x x₁) ∣ = {!!}
-  ∣ ClassRule (DisjointClasses x x₁) ∣ = {!!}
-  ∣ ClassRule (DisjointUnion x x₁ x₂) ∣ = {!!}
-  ∣_∣ (ObjectPropertyRule x) = {!!}
-  ∣_∣ (DataProperytRule x) = {!!}
-  ∣_∣ (DescriptionRule x) = {!!}
+  ∣ ClassRule (SubClassOf sub super) ∣ = ∣ sub ∣c ⊆ ∣ super ∣c
+  ∣ ClassRule (EquivalentClasses a b) ∣ = ∣ a ∣c ⊆ ∣ b ∣c × ∣ b ∣c ⊆ ∣ a ∣c
+  ∣ ClassRule (DisjointClasses a b) ∣ = ∣ a ∣c ∩ ∣ b ∣c ⊆ ∅
+  ∣ ClassRule (DisjointUnion (OC c) a b) ∣ = c ᶜ ⊆ ∣ a ∣c ∪ ∣ b ∣c × ∣ a ∣c ∩ ∣ b ∣c ⊆ ∅
+  ∣ ObjectPropertyRule (SubObjectPropertyOf sub super) ∣ = ∣ sub ∣sop ⊆ ∣ super ∣op
+  ∣ ObjectPropertyRule (EquivalentObjectProperties a b) ∣ = ∣ a ∣op ⊆ ∣ b ∣op × ∣ b ∣op ⊆ ∣ a ∣op
+  ∣ ObjectPropertyRule (DisjointObjectProperties a b) ∣ = ∣ a ∣op ∩ ∣ b ∣op ⊆ ∅
+  ∣ ObjectPropertyRule (InverseObjectProperties a b) ∣ = ∀ x y → (x , y) ∈ ∣ a ∣op × (y , x) ∈ ∣ b ∣op
+  ∣ ObjectPropertyRule (ObjectPropertyDomain p c) ∣ = ∀ x y → (x , y) ∈ ∣ p ∣op → x ∈ ∣ c ∣c
+  ∣ ObjectPropertyRule (ObjectPropertyRange p c) ∣ = ∀ x y → (x , y) ∈ ∣ p ∣op → y ∈ ∣ c ∣c
+  ∣ ObjectPropertyRule (FunctionalObjectProperty p) ∣ = ∀ x y y' → (x , y) ∈ ∣ p ∣op × (x , y') ∈ ∣ p ∣op → y ≡ y'
+  ∣ ObjectPropertyRule (InverseFunctionalObjectProperty p) ∣ = ∀ x x' y → (x , y) ∈ ∣ p ∣op × (x' , y) ∈ ∣ p ∣op → x ≡ x'
+  ∣ ObjectPropertyRule (ReflexiveObjectProperty p) ∣ = ∀ x → (x , x) ∈ ∣ p ∣op
+  ∣ ObjectPropertyRule (IrreflexiveObjectProperty p) ∣ = ∀ x → (x , x) ∉ ∣ p ∣op
+  ∣ ObjectPropertyRule (SymetricObjectProperty p) ∣ = ∀ x y → (x , y) ∈ ∣ p ∣op × (y , x) ∈ ∣ p ∣op
+  ∣ ObjectPropertyRule (AsymetricObjectProperty p) ∣ = ∀ x y → (x , y) ∈ ∣ p ∣op → (y , x) ∉ ∣ p ∣op
+  ∣ ObjectPropertyRule (TransitiveObjectProperty p) ∣ = ∀ x y z → (x , y) ∈ ∣ p ∣op × (y , z) ∈ ∣ p ∣op → (x , z) ∈ ∣ p ∣op
+  ∣ DataProperytRule (SubDataPropertyOf (DP a) (DP b)) ∣ = a ᴰᴾ ⊆ b ᴰᴾ
+  ∣ DataProperytRule (EquivalentDataProperties (DP a) (DP b)) ∣ = a ᴰᴾ ⊆ b ᴰᴾ × b ᴰᴾ ⊆ a ᴰᴾ
+  ∣ DataProperytRule (DisjointDataProperties (DP a) (DP b)) ∣ = a ᴰᴾ ∩ b ᴰᴾ ⊆ ∅
+  ∣ DataProperytRule (DataPropertyDomain (DP p) c) ∣ = ∀ x y → (x , y) ∈ p ᴰᴾ → x ∈ ∣ c ∣c
+  ∣ DataProperytRule (DataPropertyRange (DP p) dr) ∣ = ∀ x y → (x , y) ∈ p ᴰᴾ → y ∈ ∣ dr ∣r
+  ∣ DataProperytRule (FunctionalDataProperty (DP p)) ∣ = ∀ x y y' → (x , y) ∈ p ᴰᴾ × (x , y') ∈ p ᴰᴾ → y ≡ y'
+
  
