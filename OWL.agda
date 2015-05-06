@@ -309,32 +309,31 @@ module _ (URI : Set)
   ∣ DataOneOf v ∣r = foldr (λ _ → Pred Δᴰ zero) (λ c p → (λ x → x ≡ c ᴸᵀ) ∪ p) U v 
   ∣ DataTypeRestriction r x x₁ ∣r = ∣ r ∣r ∩ (x , x₁) ᶠᴬ
 
+  ∣_∣op : ObjectProperty → Pred (Δᴵ × Δᴵ) zero
+  ∣_∣op (OP x) = x ᴼᴾ 
+  ∣_∣op (IOP x) = ∁ (x ᴼᴾ)
+
+  ∣_∣sop : SubObjectProperty → Pred (Δᴵ × Δᴵ) zero
+  ∣_∣sop (SubObjectPropertyLift p) = ∣ p ∣op 
+  ∣_∣sop (SubObjectPropertyChain p q) = ∣ p ∣op ⇒ ∣ q ∣op
+
   ∣_∣c : Description → Pred Δᴵ zero
   ∣ OwlClassURI (OC x) ∣c = x ᶜ
   ∣ ObjectUnionOf xc xc₁ ∣c = ∣ xc ∣c ∪ ∣ xc₁ ∣c 
   ∣ ObjectIntersectionOf x x₁ ∣c = ∣ x ∣c ∩ ∣ x ∣c
   ∣ ObjectComplementOf x ∣c = ∁ (∣ x ∣c)
   ∣ ObjectOneOf (Ind x) ∣c = (λ x₁ → x ᴵ ≡ x₁)
-  ∣ ObjectAllValuesFrom (OP p) c ∣c = λ x → ∀ (y : Δᴵ) → (x , y) ∈ p ᴼᴾ → y ∈ ∣ c ∣c
-  ∣ ObjectAllValuesFrom (IOP p) c ∣c = λ x → ∀ (y : Δᴵ) → (y , x) ∈ p ᴼᴾ → y ∈ ∣ c ∣c
-  ∣ ObjectSomeValuesFrom (OP p) c ∣c = λ x → Σ[ y ∈ Δᴵ ] (x , y) ∈ p ᴼᴾ × y ∈ ∣ c ∣c
-  ∣ ObjectSomeValuesFrom (IOP p) c ∣c = λ x → Σ[ y ∈ Δᴵ ] (y , x) ∈ p ᴼᴾ × y ∈ ∣ c ∣c
-  ∣ ObjectExistsSelf (OP p) ∣c = λ x → (x , x) ∈ p ᴼᴾ
-  ∣ ObjectExistsSelf (IOP p) ∣c = λ x → (x , x) ∈ p ᴼᴾ
+  ∣ ObjectAllValuesFrom p c ∣c = λ x → ∀ (y : Δᴵ) → (x , y) ∈ ∣ p ∣op → y ∈ ∣ c ∣c
+  ∣ ObjectSomeValuesFrom p c ∣c = λ x → Σ[ y ∈ Δᴵ ] (x , y) ∈ ∣ p ∣op × y ∈ ∣ c ∣c
+  ∣ ObjectExistsSelf p ∣c = λ x → (x , x) ∈ ∣ p ∣op 
   ∣ ObjectHasValue (OP p) (Ind v) ∣c = λ x → (x , v ᴰ) ∈ p ᴰᴾ
   ∣ ObjectHasValue (IOP p) (Ind v) ∣c = ∅
-  ∣ ObjectMinCardinality n (OP p) ∣c = λ x → ♯OP( λ prop → (prop ∈ p ᴼᴾ) × x ∈ domain (p ᴼᴾ) ) ≥ n
-  ∣ ObjectMinCardinality n (IOP p) ∣c = λ x → ♯OP (λ prop → prop ∈ p ᴼᴾ × x ∈ range (p ᴼᴾ)) ≥ n
-  ∣ ObjectMaxCardinality n (OP p) ∣c = λ x → ♯OP (λ prop → prop ∈ p ᴼᴾ × x ∈ domain (p ᴼᴾ)) ≤ n
-  ∣ ObjectMaxCardinality n (IOP p) ∣c = λ x → ♯OP (λ prop → prop ∈ p ᴼᴾ × x ∈ range (p ᴼᴾ)) ≤ n
-  ∣ ObjectExactCardinality n (OP p) ∣c = λ x → ♯OP (λ prop → prop ∈ p ᴼᴾ × x ∈ domain (p ᴼᴾ)) ≡ n
-  ∣ ObjectExactCardinality n (IOP p) ∣c = λ x → ♯OP (λ prop → prop ∈ p ᴼᴾ × x ∈ range (p ᴼᴾ)) ≡ n
-  ∣ ObjectMinClassCardinality n (OP p) c ∣c = λ x → ♯OP( λ prop → (prop ∈ p ᴼᴾ) × x ∈ domain (p ᴼᴾ) × proj₂ prop ∈ ∣ c ∣c ) ≥ n
-  ∣ ObjectMinClassCardinality n (IOP p) c ∣c = λ x → ♯OP (λ prop → prop ∈ p ᴼᴾ × x ∈ range (p ᴼᴾ) × proj₁ prop ∈ ∣ c ∣c ) ≥ n
-  ∣ ObjectMaxClassCardinality n (OP p) c ∣c = λ x → ♯OP (λ prop → prop ∈ p ᴼᴾ × x ∈ domain (p ᴼᴾ) × proj₂ prop ∈ ∣ c ∣c ) ≤ n
-  ∣ ObjectMaxClassCardinality n (IOP p) c ∣c = λ x → ♯OP (λ prop → prop ∈ p ᴼᴾ × x ∈ range (p ᴼᴾ) × proj₁ prop ∈ ∣ c ∣c ) ≤ n
-  ∣ ObjectExactClassCardinality n (OP p) c ∣c = λ x → ♯OP (λ prop → prop ∈ p ᴼᴾ × x ∈ domain (p ᴼᴾ) × proj₂ prop ∈ ∣ c ∣c ) ≡ n
-  ∣ ObjectExactClassCardinality n (IOP p) c ∣c = λ x → ♯OP (λ prop → prop ∈ p ᴼᴾ × x ∈ range (p ᴼᴾ) × proj₂ prop ∈ ∣ c ∣c ) ≡ n  
+  ∣ ObjectMinCardinality n p ∣c = λ x → ♯OP( λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op ) ≥ n
+  ∣ ObjectMaxCardinality n p ∣c = λ x → ♯OP (λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op) ≤ n
+  ∣ ObjectExactCardinality n p ∣c = λ x → ♯OP (λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op) ≡ n
+  ∣ ObjectMinClassCardinality n p c ∣c = λ x → ♯OP( λ prop → (prop ∈ ∣ p ∣op) × x ∈ domain ∣ p ∣op × proj₂ prop ∈ ∣ c ∣c ) ≥ n
+  ∣ ObjectMaxClassCardinality n p c ∣c = λ x → ♯OP (λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op  × proj₂ prop ∈ ∣ c ∣c ) ≤ n
+  ∣ ObjectExactClassCardinality n p c ∣c = λ x → ♯OP (λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op × proj₂ prop ∈ ∣ c ∣c ) ≡ n
   ∣ DataAllValuesFrom (DP p) x₁ ∣c = λ x → ∀ y → y ∈ p ᴰᴾ → proj₂ y ∈ ∣ x₁ ∣r
   ∣ DataSomeValuesFrom (DP p) x₁ ∣c = λ x → Σ[ y ∈ (Δᴵ × Δᴰ) ] (y ∈ p ᴰᴾ → proj₂ y ∈ ∣ x₁ ∣r)
   ∣ DataHasValue (DP p) c ∣c = λ x → Σ[ y ∈ Δᴰ ] (y ≡ c ᴸᵀ × (x , y) ∈ p ᴰᴾ)
@@ -344,14 +343,6 @@ module _ (URI : Set)
   ∣ DataMinRangeCardinality n (DP p) r ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ) × proj₂ prop ∈ ∣ r ∣r) ≥ n
   ∣ DataMaxRangeCardinality n (DP p) r ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ) × proj₂ prop ∈ ∣ r ∣r) ≤ n
   ∣ DataExactRangeCardinality n (DP p) r ∣c = λ x → ♯DP (λ prop → prop ∈ p ᴰᴾ × x ∈ domain (p ᴰᴾ) × proj₂ prop ∈ ∣ r ∣r) ≡ n
-
-  ∣_∣op : ObjectProperty → Pred (Δᴵ × Δᴵ) zero
-  ∣_∣op (OP x) = x ᴼᴾ 
-  ∣_∣op (IOP x) = ∁ (x ᴼᴾ)
-
-  ∣_∣sop : SubObjectProperty → Pred (Δᴵ × Δᴵ) zero
-  ∣_∣sop (SubObjectPropertyLift p) = ∣ p ∣op 
-  ∣_∣sop (SubObjectPropertyChain p q) = ∣ p ∣op ⇒ ∣ q ∣op
 
   ∣_∣ : Rule → Set
   ∣ FactRule (SameIndividual (Ind x) (Ind x₁)) ∣ = x ᴵ ≡ x₁ ᴵ 
