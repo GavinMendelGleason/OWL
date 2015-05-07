@@ -8,7 +8,7 @@ open import Relation.Nullary
 open import Relation.Unary hiding (Decidable)
 open import Relation.Binary.Core
 open import Level renaming (zero to lzero ; suc to lsuc)
-open import Data.String
+open import Data.String renaming (_≟_ to _≟s_)
 open import Relation.Binary.PropositionalEquality as PropEq
   using (_≡_; refl)
 
@@ -77,10 +77,14 @@ module Example where
   _ᴰᴾ NameURI (C x , proj₂) = ⊥
   _ᴰᴾ NameURI (DP x , proj₂) = ⊥
   _ᴰᴾ NameURI (OP x , proj₂) = ⊥
-  _ᴰᴾ NameURI (I JackURI , natural x) = ⊤
-  _ᴰᴾ NameURI (I JackURI , string x) = ⊥
-  _ᴰᴾ NameURI (I JillURI , natural x) = ⊤
-  _ᴰᴾ NameURI (I JillURI , string x) = ⊥
+  _ᴰᴾ NameURI (I JackURI , natural x) = ⊥
+  _ᴰᴾ NameURI (I JackURI , string x) with x ≟s "Jack"
+  _ᴰᴾ NameURI (I JackURI , string x) | yes p = ⊤
+  _ᴰᴾ NameURI (I JackURI , string x) | no ¬p = ⊥
+  _ᴰᴾ NameURI (I JillURI , natural x) = ⊥
+  _ᴰᴾ NameURI (I JillURI , string x) with x ≟s "Jill"
+  _ᴰᴾ NameURI (I JillURI , string x) | yes p = ⊤
+  _ᴰᴾ NameURI (I JillURI , string x) | no p = ⊥
   
   _ᴼᴾ : ObjectPropertyURI → Pred (Δᴵ × Δᴵ ) lzero
   _ᴼᴾ OwlTopObjectProperty y = ⊤
