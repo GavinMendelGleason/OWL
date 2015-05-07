@@ -53,18 +53,12 @@ module Example where
   _ᶜ : ClassURI → Pred Δᴵ lzero
   _ᶜ OwlThing x = ⊤
   _ᶜ OwlNothing x = ⊥
-  _ᶜ AgentURI (C OwlThing) = ⊥
-  _ᶜ AgentURI (C OwlNothing) = ⊤
-  _ᶜ AgentURI (C AgentURI) = ⊤
-  _ᶜ AgentURI (C PersonURI) = ⊤
+  _ᶜ AgentURI (C x) = ⊥
   _ᶜ AgentURI (DP x) = ⊥
   _ᶜ AgentURI (OP x) = ⊥
   _ᶜ AgentURI (I JackURI) = ⊤
   _ᶜ AgentURI (I JillURI) = ⊤
-  _ᶜ PersonURI (C OwlThing) = ⊥
-  _ᶜ PersonURI (C OwlNothing) = ⊤
-  _ᶜ PersonURI (C AgentURI) = ⊥
-  _ᶜ PersonURI (C PersonURI) = ⊤
+  _ᶜ PersonURI (C x) = ⊥
   _ᶜ PersonURI (DP x) = ⊥
   _ᶜ PersonURI (OP x) = ⊥
   _ᶜ PersonURI (I JackURI) = ⊤
@@ -81,12 +75,12 @@ module Example where
   _ᴰᴾ OwlTopDataProperty y = ⊤
   _ᴰᴾ OwlBottomDataProperty y = ⊥
   _ᴰᴾ NameURI (C x , proj₂) = ⊥
-  _ᴰᴾ NameURI (DP OwlTopDataProperty , proj₂) = ⊥ 
-  _ᴰᴾ NameURI (DP OwlBottomDataProperty , proj₂) = ⊤
-  _ᴰᴾ NameURI (DP NameURI , natural x) = ⊥
-  _ᴰᴾ NameURI (DP NameURI , string x) = ⊤
+  _ᴰᴾ NameURI (DP x , proj₂) = ⊥
   _ᴰᴾ NameURI (OP x , proj₂) = ⊥
-  _ᴰᴾ NameURI (I x , proj₂) = ⊥
+  _ᴰᴾ NameURI (I JackURI , natural x) = ⊤
+  _ᴰᴾ NameURI (I JackURI , string x) = ⊥
+  _ᴰᴾ NameURI (I JillURI , natural x) = ⊤
+  _ᴰᴾ NameURI (I JillURI , string x) = ⊥
   
   _ᴼᴾ : ObjectPropertyURI → Pred (Δᴵ × Δᴵ ) lzero
   _ᴼᴾ OwlTopObjectProperty y = ⊤
@@ -94,16 +88,14 @@ module Example where
   _ᴼᴾ KnowsURI (C x , proj₂) = ⊥
   _ᴼᴾ KnowsURI (DP x , proj₂) = ⊥
   _ᴼᴾ KnowsURI (OP x , proj₂) = ⊥
-  _ᴼᴾ KnowsURI (I JackURI , C x) = ⊥
-  _ᴼᴾ KnowsURI (I JackURI , DP x) = ⊥
-  _ᴼᴾ KnowsURI (I JackURI , OP x) = ⊥
-  _ᴼᴾ KnowsURI (I JackURI , I JackURI) = ⊤
-  _ᴼᴾ KnowsURI (I JackURI , I JillURI) = ⊤
-  _ᴼᴾ KnowsURI (I JillURI , C x) = ⊥
-  _ᴼᴾ KnowsURI (I JillURI , DP x) = ⊥
-  _ᴼᴾ KnowsURI (I JillURI , OP x) = ⊥
-  _ᴼᴾ KnowsURI (I JillURI , I JackURI) = ⊤
-  _ᴼᴾ KnowsURI (I JillURI , I JillURI) = ⊤
+  _ᴼᴾ KnowsURI (I x , C y) = ⊥
+  _ᴼᴾ KnowsURI (I x , DP y) = ⊥
+  _ᴼᴾ KnowsURI (I x , OP y) = ⊥
+  _ᴼᴾ KnowsURI (I x , I y) with x | y
+  _ᴼᴾ KnowsURI (I x , I y) | JackURI | JackURI = ⊤
+  _ᴼᴾ KnowsURI (I x , I y) | JackURI | JillURI = ⊤
+  _ᴼᴾ KnowsURI (I x , I y) | JillURI | JackURI = ⊤
+  _ᴼᴾ KnowsURI (I x , I y) | JillURI | JillURI = ⊤
 
   open import Facet
   _ᶠᴬ : Facet × Literal → Pred Δᴰ lzero
@@ -160,77 +152,42 @@ module Example where
                    ((λ x y p → agentRange x y p) ,
                      ((λ x y p → agentDomain x y p) , tt)))
                where personIsAgent : ∀ x → x ∈ PersonURI ᶜ → x ∈ AgentURI ᶜ
-                     personIsAgent (C OwlThing) ()
-                     personIsAgent (C OwlNothing) p = tt
-                     personIsAgent (C AgentURI) p = tt
-                     personIsAgent (C PersonURI) p = tt
+                     personIsAgent (C x) ()
                      personIsAgent (DP x) () 
                      personIsAgent (OP x) ()
                      personIsAgent (I JackURI) p = tt
                      personIsAgent (I JillURI) p = tt
                      {- lack of simultaneously range and domain restrictions is irritating -}
                      agentRange : ∀ x y → (x , y) ∈ KnowsURI ᴼᴾ → y ∈ AgentURI ᶜ
-                     agentRange (C x) y ()
-                     agentRange (DP x) y ()
-                     agentRange (OP x) y ()
-                     agentRange (I JackURI) (C OwlThing) ()
-                     agentRange (I JackURI) (C OwlNothing) p = tt
-                     agentRange (I JackURI) (C AgentURI) p = tt
-                     agentRange (I JackURI) (C PersonURI) p = tt
-                     agentRange (I JillURI) (C OwlThing) ()
-                     agentRange (I JillURI) (C OwlNothing) p = tt
-                     agentRange (I JillURI) (C AgentURI) p = tt
-                     agentRange (I JillURI) (C PersonURI) p = tt
-                     agentRange (I JackURI) (DP x) ()
-                     agentRange (I JillURI) (DP x) ()
-                     agentRange (I JackURI) (OP x₁) ()
-                     agentRange (I JillURI) (OP x₁) ()
-                     agentRange (I x) (I JackURI) p = tt
-                     agentRange (I x) (I JillURI) p = tt
+                     agentRange (C x) (C x₁) ()
+                     agentRange (C x) (DP x₁) ()
+                     agentRange (C x) (OP x₁) ()
+                     agentRange (C x) (I x₁) ()
+                     agentRange (DP x) (C x₁) ()
+                     agentRange (DP x) (DP x₁) ()
+                     agentRange (DP x) (OP x₁) ()
+                     agentRange (DP x) (I x₁) ()
+                     agentRange (OP x) (C x₁) ()
+                     agentRange (OP x) (DP x₁) ()
+                     agentRange (OP x) (OP x₁) ()
+                     agentRange (OP x) (I x₁) ()
+                     agentRange (I x)  (C x₁) ()
+                     agentRange (I x) (OP x₁) ()
+                     agentRange (I x) (DP x₁) ()
+                     agentRange (I x) (I x₁) x₂ with x | x₁
+                     agentRange (I x) (I x₁) x₂ | JackURI | JackURI = tt
+                     agentRange (I x) (I x₁) x₂ | JackURI | JillURI = tt
+                     agentRange (I x) (I x₁) x₂ | JillURI | JackURI = tt
+                     agentRange (I x) (I x₁) x₂ | JillURI | JillURI = tt 
                      {- more pattern matching in the interpretation function 
                         would easy our lives here... -}
                      agentDomain : ∀ x y → (x , y) ∈ KnowsURI ᴼᴾ → x ∈ AgentURI ᶜ
-                     agentDomain (C OwlThing) (C x₁) ()
-                     agentDomain (C OwlNothing) (C x₁) p = tt
-                     agentDomain (C AgentURI) (C x₁) p = tt
-                     agentDomain (C PersonURI) (C x₁) p = tt
-                     agentDomain (DP x) (C x₁) ()
-                     agentDomain (OP x) (C x₁) ()
-                     agentDomain (I JackURI) (C x₁) p = tt
-                     agentDomain (I JillURI) (C x₁) p = tt
-                     agentDomain (C OwlThing) (DP x₁) ()
-                     agentDomain (C OwlNothing) (DP x₁) ()
-                     agentDomain (C AgentURI) (DP x₁) ()
-                     agentDomain (C PersonURI) (DP x₁) ()
-                     agentDomain (DP OwlTopDataProperty) (DP x₁) ()
-                     agentDomain (DP OwlBottomDataProperty) (DP x₁) ()
-                     agentDomain (DP NameURI) (DP OwlTopDataProperty) ()
-                     agentDomain (DP NameURI) (DP OwlBottomDataProperty) ()
-                     agentDomain (DP NameURI) (DP NameURI) ()
-                     agentDomain (OP x) (DP x₁) ()
-                     agentDomain (I JackURI) (DP x₁) p = tt
-                     agentDomain (I JillURI) (DP x₁) p = tt
-                     agentDomain (C OwlThing) (OP x₁) ()
-                     agentDomain (C OwlNothing) (OP x₁) p = tt
-                     agentDomain (C AgentURI) (OP x₁) p = tt
-                     agentDomain (C PersonURI) (OP x₁) p = tt
-                     agentDomain (DP x) (OP x₁) ()
-                     agentDomain (OP x) (OP x₁) ()
-                     agentDomain (I JackURI) (OP x₁) p = tt
-                     agentDomain (I JillURI) (OP x₁) p = tt
-                     agentDomain (C OwlThing) (I JackURI) ()
-                     agentDomain (C OwlNothing) (I JackURI) p = tt
-                     agentDomain (C AgentURI) (I JackURI) p = tt
-                     agentDomain (C PersonURI) (I JackURI) p = tt
-                     agentDomain (DP x) (I JackURI) ()
-                     agentDomain (OP x) (I JackURI) ()
-                     agentDomain (I JackURI) (I JackURI) p = tt
-                     agentDomain (I JillURI) (I JackURI) p = tt
-                     agentDomain (C OwlThing) (I JillURI) ()
-                     agentDomain (C OwlNothing) (I JillURI) p = tt
-                     agentDomain (C AgentURI) (I JillURI) p = tt
-                     agentDomain (C PersonURI) (I JillURI) p = tt
-                     agentDomain (DP x) (I JillURI) ()
-                     agentDomain (OP x) (I JillURI) ()
-                     agentDomain (I JackURI) (I JillURI) p = tt
-                     agentDomain (I JillURI) (I JillURI) p = tt
+                     agentDomain (C x) y ()
+                     agentDomain (DP x) y ()
+                     agentDomain (OP x) y ()
+                     agentDomain (I x) (C x₁) ()
+                     agentDomain (I x) (DP x₁) ()
+                     agentDomain (I x) (OP x₁) ()
+                     agentDomain (I JackURI) (I y) p = tt
+                     agentDomain (I JillURI) (I y) p = tt
+

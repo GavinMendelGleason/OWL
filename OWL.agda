@@ -1,6 +1,3 @@
-
-
-
 open import Data.Empty
 open import Function
 open import Data.Unit hiding (setoid ; _≤_ )
