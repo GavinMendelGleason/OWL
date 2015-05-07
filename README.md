@@ -11,4 +11,6 @@ In order to load this code, you need to d/l and install Agda.
 
 http://wiki.portal.chalmers.se/agda/pmwiki.php?n=Main.Download
 
-The code were developed using Agda 2.4.2.2 and version 0.9 of the Standard Library.
+An example theory is given in "Example.agda".  This shows how you must construct interpretations.  After the interpretations are constructed you can open the OWL module passing the appropriate interpretations.  One can then show inhabitation of a term of type | myTheory | which corresponds to showing that the theory is sound according to OWLs semantics.
+
+The code was developed using Agda 2.4.2.2 and version 0.9 of the Standard Library.
