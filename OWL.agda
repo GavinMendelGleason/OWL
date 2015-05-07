@@ -310,14 +310,14 @@ module OWL (ClassURI : Set)
   ∣_∣c : Description → Pred Δᴵ zero
   ∣ OwlClassURI (OC x) ∣c = x ᶜ
   ∣ ObjectUnionOf xc xc₁ ∣c = ∣ xc ∣c ∪ ∣ xc₁ ∣c 
-  ∣ ObjectIntersectionOf x x₁ ∣c = ∣ x ∣c ∩ ∣ x ∣c
+  ∣ ObjectIntersectionOf x x₁ ∣c = ∣ x ∣c ∩ ∣ x₁ ∣c
   ∣ ObjectComplementOf x ∣c = ∁ (∣ x ∣c)
   ∣ ObjectOneOf (Ind x) ∣c = (λ x₁ → x ᴵ ≡ x₁)
   ∣ ObjectAllValuesFrom p c ∣c = λ x → ∀ (y : Δᴵ) → (x , y) ∈ ∣ p ∣op → y ∈ ∣ c ∣c
   ∣ ObjectSomeValuesFrom p c ∣c = λ x → Σ[ y ∈ Δᴵ ] (x , y) ∈ ∣ p ∣op × y ∈ ∣ c ∣c
   ∣ ObjectExistsSelf p ∣c = λ x → (x , x) ∈ ∣ p ∣op 
   ∣ ObjectHasValue (OP p) (Ind v) ∣c = λ x → (x , v ᴵ) ∈ p ᴼᴾ
-  ∣ ObjectHasValue (IOP p) (Ind v) ∣c = ∅
+  ∣ ObjectHasValue (IOP p) (Ind v) ∣c = ∁ (λ x → (x , v ᴵ) ∈ p ᴼᴾ)
   ∣ ObjectMinCardinality n p ∣c = λ x → ♯OP( λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op ) ≥ n
   ∣ ObjectMaxCardinality n p ∣c = λ x → ♯OP (λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op) ≤ n
   ∣ ObjectExactCardinality n p ∣c = λ x → ♯OP (λ prop → prop ∈ ∣ p ∣op × x ∈ domain ∣ p ∣op) ≡ n
