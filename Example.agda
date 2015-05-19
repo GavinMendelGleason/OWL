@@ -20,6 +20,9 @@ module Example where
     AgentURI : ClassURI
     PersonURI : ClassURI 
 
+  --Class URI = Fin 4
+
+
   data DataPropertyURI : Set where
     OwlTopDataProperty : DataPropertyURI
     OwlBottomDataProperty : DataPropertyURI

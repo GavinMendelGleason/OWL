@@ -281,9 +281,6 @@ module OWL (ClassURI : Set)
   Theory : ℕ → Set
   Theory n = Vec Rule n
 
-  raise : ∀ {ℓ} {A : Set zero} → Pred A zero → Pred A ℓ
-  raise  {ℓ} {_} p x = Lift {zero} {ℓ} (p x)
-
   domain : ∀ {A B : Set} → Pred (A × B) zero  → Pred A zero 
   domain {A} {B} p = λ x → Σ[ y ∈ B ] p (x , y)
 
